@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Gohil Trading Journal</title>
+  <!-- PWA Meta & Manifest -->
+  <meta name="theme-color" content="#0d1117">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Gohil Journal">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome for trading icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Fonts Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            appDark: '#0d1117',
+            cardDark: '#161b22',
+            cardBorder: '#30363d',
+            tradeGreen: '#00D09C',
+            tradeGreenBg: 'rgba(0, 208, 156, 0.12)',
+            tradeRed: '#EB5757',
+            tradeRedBg: 'rgba(235, 87, 87, 0.12)',
+            primaryBlue: '#387ed1',
+            accentOrange: '#f59e0b'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    input, textarea {
+      user-select: text;
+    }
+    /* Hide scrollbars but keep functionality */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    body {
+      background-color: #0b0e14;
+      color: #e6edf3;
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+<body class="flex justify-center min-h-screen bg-[#07090e]">
+
+  <!-- Mobile Device Shell Frame -->
+  <div class="w-full max-w-md min-h-screen flex flex-col bg-appDark shadow-2xl relative border-x border-[#21262d] pb-24 overflow-x-hidden">
+
+    <!-- Top Status Bar & Header -->
+    <header class="sticky top-0 z-30 bg-appDark/95 backdrop-blur-md px-4 py-3 border-b border-cardBorder flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-tradeGreen to-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-950/40">
+          <i class="fa-solid fa-chart-line text-black font-bold text-sm"></i>
+        </div>
+        <div>
+          <h1 class="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
+            Gohil Trading Journal
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-cardBorder text-gray-300 font-mono font-medium">PRO</span>
+          </h1>
+          <p class="text-[11px] text-gray-400">Nifty Options Scalping Log</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="pwaInstallBtn" onclick="installPWA()" class="hidden items-center gap-1 px-2.5 py-1 rounded-full bg-tradeGreen text-black text-xs font-bold active:scale-95 transition">
+          <i class="fa-solid fa-download text-[10px]"></i> Install
+        </button>
+        <button onclick="openCapitalModal()" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cardDark border border-cardBorder text-xs text-gray-300 active:scale-95 transition">
+          <i class="fa-solid fa-wallet text-amber-400 text-[11px]"></i>
+          <span id="headerCapBadge" class="font-mono font-semibold">₹20,000</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- MAIN VIEWS CONTAINER -->
+    <main class="flex-1 p-3.5 space-y-4 overflow-y-auto no-scrollbar">
+
+      <!-- ================= 1. DASHBOARD VIEW ================= -->
+      <section id="view-dashboard" class="space-y-4">
+        <!-- Hero Capital & PnL Card -->
+        <div class="bg-gradient-to-br from-[#161c24] to-[#12161f] p-4 rounded-2xl border border-cardBorder shadow-lg relative overflow-hidden">
+          <div class="absolute -right-6 -bottom-6 w-28 h-28 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none"></div>
+          
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <span class="text-xs uppercase tracking-wider text-gray-400 font-medium">Current Capital</span>
+              <div class="flex items-baseline space-x-2 mt-0.5">
+                <span id="heroCurrentCap" class="text-2xl font-bold font-mono tracking-tight text-white">₹21,180</span>
+                <span id="heroRoiBadge" class="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-tradeGreenBg text-tradeGreen">+5.90%</span>
+              </div>
+            </div>
+            <button onclick="openCapitalModal()" class="text-xs text-gray-400 hover:text-white p-1.5 rounded-lg bg-cardBorder/50">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 pt-3 mt-2 border-t border-cardBorder/60">
+            <div>
+              <p class="text-[11px] text-gray-400">Total Net P&L</p>
+              <p id="heroNetPnl" class="text-base font-bold font-mono text-tradeGreen mt-0.5">+₹1,180.00</p>
+            </div>
+            <div class="text-right">
+              <p class="text-[11px] text-gray-400">Starting Capital</p>
+              <p id="heroStartCap" class="text-base font-medium font-mono text-gray-200 mt-0.5">₹20,000.00</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metric Grid -->
+        <div class="grid grid-cols-3 gap-2">
+          <!-- Total Trades -->
+          <div class="bg-cardDark border border-cardBorder p-2.5 rounded-xl">
+            <span class="text-[10px] text-gray-400 block mb-0.5">Trades</span>
+            <div class="flex items-baseline justify-between">
+              <span id="metricTotalTrades" class="text-lg font-bold font-mono text-white">2</span>
+              <span class="text-[10px] text-gray-400 font-mono">100%</span>
+            </div>
+          </div>
+          <!-- Win Rate -->
+          <div class="bg-cardDark border border-cardBorder p-2.5 rounded-xl">
+            <span class="text-[10px] text-gray-400 block mb-0.5">Win Rate</span>
+            <div class="flex items-baseline justify-between">
+              <span id="metricWinRate" class="text-lg font-bold font-mono text-tradeGreen">50.0%</span>
+              <i class="fa-solid fa-trophy text-[10px] text-amber-400"></i>
+            </div>
+          </div>
+          <!-- Charges Paid -->
+          <div class="bg-cardDark border border-cardBorder p-2.5 rounded-xl">
+            <span class="text-[10px] text-gray-400 block mb-0.5">Brokerage</span>
+            <div class="flex items-baseline justify-between">
+              <span id="metricCharges" class="text-lg font-bold font-mono text-orange-400">₹120</span>
+              <i class="fa-solid fa-receipt text-[10px] text-gray-500"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Win / Loss Stats Split Card -->
+        <div class="bg-cardDark border border-cardBorder p-3 rounded-2xl space-y-2.5">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-gray-300 font-semibold flex items-center gap-1.5">
+              <i class="fa-solid fa-scale-balanced text-primaryBlue"></i> Performance Ratio
+            </span>
+            <span id="metricProfitFactor" class="text-[11px] font-mono text-gray-400">Profit Factor: <strong class="text-white">1.87</strong></span>
+          </div>
+          <!-- Visual Bar -->
+          <div class="h-2 w-full bg-cardBorder rounded-full overflow-hidden flex">
+            <div id="barWinRatio" class="bg-tradeGreen h-full transition-all duration-500" style="width: 50%;"></div>
+            <div id="barLossRatio" class="bg-tradeRed h-full transition-all duration-500" style="width: 50%;"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs pt-1">
+            <div class="p-2 rounded-xl bg-tradeGreenBg border border-tradeGreen/20">
+              <div class="flex justify-between items-center">
+                <span class="text-tradeGreen font-semibold text-[11px]">Wins (<span id="countWins">1</span>)</span>
+                <i class="fa-solid fa-circle-up text-tradeGreen text-[11px]"></i>
+              </div>
+              <p id="avgWinDisplay" class="text-sm font-mono font-bold text-tradeGreen mt-1">+₹2,540</p>
+              <span class="text-[10px] text-gray-400">Avg Win</span>
+            </div>
+            <div class="p-2 rounded-xl bg-tradeRedBg border border-tradeRed/20">
+              <div class="flex justify-between items-center">
+                <span class="text-tradeRed font-semibold text-[11px]">Losses (<span id="countLosses">1</span>)</span>
+                <i class="fa-solid fa-circle-down text-tradeRed text-[11px]"></i>
+              </div>
+              <p id="avgLossDisplay" class="text-sm font-mono font-bold text-tradeRed mt-1">-₹1,360</p>
+              <span class="text-[10px] text-gray-400">Avg Loss</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Equity Curve Chart -->
+        <div class="bg-cardDark border border-cardBorder p-3.5 rounded-2xl">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+              <i class="fa-solid fa-chart-area text-tradeGreen"></i> Capital Growth Curve
+            </span>
+            <span class="text-[10px] font-mono text-gray-400">Net Trajectory</span>
+          </div>
+          <div class="relative w-full h-36 bg-[#0f141c] rounded-xl border border-cardBorder/60 p-1 flex items-center justify-center">
+            <canvas id="equityCanvas" class="w-full h-full block"></canvas>
+            <div id="noDataCanvasHint" class="hidden text-xs text-gray-500 font-mono">No trades added yet</div>
+          </div>
+        </div>
+
+        <!-- Recent Trades Preview -->
+        <div class="space-y-2">
+          <div class="flex justify-between items-center px-1">
+            <span class="text-xs font-semibold text-gray-300">Recent Trades</span>
+            <button onclick="switchTab('journal')" class="text-xs text-primaryBlue font-medium hover:underline flex items-center gap-1">
+              View All <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            </button>
+          </div>
+          <div id="recentTradesList" class="space-y-2">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 2. JOURNAL LIST VIEW ================= -->
+      <section id="view-journal" class="space-y-3 hidden">
+        <!-- Filter Bar -->
+        <div class="flex items-center justify-between gap-1.5 overflow-x-auto no-scrollbar py-1">
+          <button onclick="setFilter('ALL')" id="filter-btn-ALL" class="filter-tab px-3 py-1.5 rounded-xl text-xs font-medium bg-cardBorder text-white whitespace-nowrap active:scale-95 transition">All (<span id="allCount">0</span>)</button>
+          <button onclick="setFilter('WIN')" id="filter-btn-WIN" class="filter-tab px-3 py-1.5 rounded-xl text-xs font-medium bg-cardDark text-gray-400 border border-cardBorder whitespace-nowrap active:scale-95 transition">Wins</button>
+          <button onclick="setFilter('LOSS')" id="filter-btn-LOSS" class="filter-tab px-3 py-1.5 rounded-xl text-xs font-medium bg-cardDark text-gray-400 border border-cardBorder whitespace-nowrap active:scale-95 transition">Losses</button>
+          <button onclick="setFilter('CE')" id="filter-btn-CE" class="filter-tab px-3 py-1.5 rounded-xl text-xs font-medium bg-cardDark text-gray-400 border border-cardBorder whitespace-nowrap active:scale-95 transition">CE</button>
+          <button onclick="setFilter('PE')" id="filter-btn-PE" class="filter-tab px-3 py-1.5 rounded-xl text-xs font-medium bg-cardDark text-gray-400 border border-cardBorder whitespace-nowrap active:scale-95 transition">PE</button>
+        </div>
+
+        <!-- Search & Date Filter -->
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-gray-400"></i>
+          <input type="text" id="journalSearchInput" oninput="renderJournal()" placeholder="Search strike, notes, date..." class="w-full bg-cardDark border border-cardBorder rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-primaryBlue">
+        </div>
+
+        <!-- List Container -->
+        <div id="journalList" class="space-y-2.5">
+          <!-- Populated by JS -->
+        </div>
+
+        <div id="journalEmptyState" class="hidden text-center py-12 text-gray-500">
+          <i class="fa-regular fa-folder-open text-3xl mb-2 text-gray-600"></i>
+          <p class="text-xs">No trades match this filter.</p>
+        </div>
+      </section>
+
+      <!-- ================= 3. ANALYTICS & SETTINGS VIEW ================= -->
+      <section id="view-analytics" class="space-y-4 hidden">
+        <!-- Advanced Metrics Card -->
+        <div class="bg-cardDark border border-cardBorder p-4 rounded-2xl space-y-3">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-gray-400">Trading Stats Breakdown</h2>
+          
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div class="p-2.5 bg-[#12161f] rounded-xl border border-cardBorder/60">
+              <span class="text-gray-400 text-[11px] block">Gross Profit</span>
+              <span id="statGrossPnl" class="text-sm font-bold font-mono text-tradeGreen mt-0.5 block">₹1,300.00</span>
+            </div>
+            <div class="p-2.5 bg-[#12161f] rounded-xl border border-cardBorder/60">
+              <span class="text-gray-400 text-[11px] block">Total Brokerage</span>
+              <span id="statBrokerage" class="text-sm font-bold font-mono text-orange-400 mt-0.5 block">₹120.00</span>
+            </div>
+            <div class="p-2.5 bg-[#12161f] rounded-xl border border-cardBorder/60">
+              <span class="text-gray-400 text-[11px] block">Largest Win</span>
+              <span id="statMaxWin" class="text-sm font-bold font-mono text-tradeGreen mt-0.5 block">₹2,540.00</span>
+            </div>
+            <div class="p-2.5 bg-[#12161f] rounded-xl border border-cardBorder/60">
+              <span class="text-gray-400 text-[11px] block">Largest Loss</span>
+              <span id="statMaxLoss" class="text-sm font-bold font-mono text-tradeRed mt-0.5 block">-₹1,360.00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data Management & Backups -->
+        <div class="bg-cardDark border border-cardBorder p-4 rounded-2xl space-y-3">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-gray-400">Excel / CSV Backup & Sync</h2>
+          <p class="text-xs text-gray-400 leading-relaxed">
+            Data is securely saved in your browser storage. You can export to CSV anytime to open directly in Microsoft Excel.
+          </p>
+
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <button onclick="exportToCSV()" class="flex items-center justify-center gap-2 p-2.5 bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-semibold active:scale-95 transition">
+              <i class="fa-solid fa-file-excel"></i> Export Excel/CSV
+            </button>
+            <label class="flex items-center justify-center gap-2 p-2.5 bg-cardBorder/70 text-gray-200 border border-cardBorder rounded-xl text-xs font-semibold active:scale-95 transition cursor-pointer">
+              <i class="fa-solid fa-file-import"></i> Import CSV
+              <input type="file" id="importCsvInput" accept=".csv" onchange="importFromCSV(event)" class="hidden">
+            </label>
+          </div>
+
+          <div class="pt-2 border-t border-cardBorder/50 flex justify-between items-center">
+            <button onclick="loadSampleExcelTrades()" class="text-xs text-primaryBlue font-medium hover:underline flex items-center gap-1.5">
+              <i class="fa-solid fa-rotate-left"></i> Reload Excel Demo Trades
+            </button>
+            <button onclick="clearAllDataPrompt()" class="text-xs text-tradeRed font-medium hover:underline flex items-center gap-1.5">
+              <i class="fa-regular fa-trash-can"></i> Clear All
+            </button>
+          </div>
+        </div>
+
+        <!-- Information / Excel Formulas Mapping -->
+        <div class="bg-cardDark/60 border border-cardBorder p-3 rounded-2xl text-[11px] text-gray-400 space-y-1.5">
+          <p class="font-semibold text-gray-300">Formulas used (same as Gohil Excel):</p>
+          <ul class="list-disc list-inside space-y-1 font-mono text-[10px] text-gray-400">
+            <li>Points = Exit Premium - Entry Premium</li>
+            <li>Gross P&L = Points × Quantity</li>
+            <li>Net P&L = Gross P&L - Charges (₹60 default)</li>
+            <li>Capital Used = Entry Premium × Quantity</li>
+            <li>ROI % = (Net P&L / Capital Used) × 100</li>
+          </ul>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- FLOATING ACTION BUTTON (New Trade) -->
+    <div class="fixed bottom-16 right-4 sm:right-[calc(50%-200px)] z-20 pointer-events-auto">
+      <button onclick="openTradeModal()" class="w-13 h-13 p-3.5 bg-tradeGreen hover:bg-emerald-400 text-black font-bold rounded-full shadow-xl shadow-emerald-500/25 flex items-center justify-center active:scale-90 transition-transform">
+        <i class="fa-solid fa-plus text-lg"></i>
+      </button>
+    </div>
+
+    <!-- BOTTOM APP NAVIGATION BAR -->
+    <nav class="fixed bottom-0 max-w-md w-full bg-appDark/95 backdrop-blur-lg border-t border-cardBorder z-20 grid grid-cols-3 py-2 px-4">
+      <button onclick="switchTab('dashboard')" id="nav-btn-dashboard" class="flex flex-col items-center justify-center space-y-1 text-tradeGreen transition">
+        <i class="fa-solid fa-house text-base"></i>
+        <span class="text-[10px] font-medium">Dashboard</span>
+      </button>
+
+      <button onclick="switchTab('journal')" id="nav-btn-journal" class="flex flex-col items-center justify-center space-y-1 text-gray-400 hover:text-white transition">
+        <i class="fa-solid fa-book-open text-base"></i>
+        <span class="text-[10px] font-medium">Journal</span>
+      </button>
+
+      <button onclick="switchTab('analytics')" id="nav-btn-analytics" class="flex flex-col items-center justify-center space-y-1 text-gray-400 hover:text-white transition">
+        <i class="fa-solid fa-sliders text-base"></i>
+        <span class="text-[10px] font-medium">Settings</span>
+      </button>
+    </nav>
+
+    <!-- ================= ADD / EDIT TRADE MODAL ================= -->
+    <div id="tradeModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden transition-opacity">
+      <div class="bg-cardDark w-full max-w-md rounded-t-3xl sm:rounded-2xl border border-cardBorder max-h-[92vh] flex flex-col overflow-hidden animate-slide-up">
+        
+        <!-- Modal Header -->
+        <div class="p-4 border-b border-cardBorder flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span id="modalHeaderBadge" class="w-2.5 h-2.5 rounded-full bg-tradeGreen"></span>
+            <h3 id="modalTitle" class="text-sm font-bold text-white">Add New Option Trade</h3>
+          </div>
+          <button onclick="closeTradeModal()" class="text-gray-400 hover:text-white w-8 h-8 rounded-full bg-cardBorder/40 flex items-center justify-center">
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+        </div>
+
+        <!-- Form Body -->
+        <form id="tradeForm" onsubmit="handleTradeSubmit(event)" class="p-4 space-y-3.5 overflow-y-auto flex-1 no-scrollbar text-xs">
+          <input type="hidden" id="editTradeId" value="">
+
+          <!-- Date & Index -->
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-gray-400 mb-1 text-[11px]">Trade Date</label>
+              <input type="date" id="tradeDate" required class="w-full bg-[#10141b] border border-cardBorder rounded-xl p-2.5 text-white focus:outline-none focus:border-primaryBlue">
+            </div>
+            <div>
+              <label class="block text-gray-400 mb-1 text-[11px]">Instrument</label>
+              <select id="tradeInstrument" onchange="updateLotPresets()" class="w-full bg-[#10141b] border border-cardBorder rounded-xl p-2.5 text-white focus:outline-none focus:border-primaryBlue">
+                <option value="NIFTY">NIFTY</option>
+                <option value="BANKNIFTY">BANKNIFTY</option>
+                <option value="FINNIFTY">FINNIFTY</option>
+                <option value="SENSEX">SENSEX</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Type (CE / PE) Toggle & Strike -->
+          <div class="grid grid-cols-2 gap-2.5 items-end">
+            <div>
+              <label class="block text-gray-400 mb-1 text-[11px]">Option Type</label>
+              <div class="grid grid-cols-2 gap-1 bg-[#10141b] p-1 rounded-xl border border-cardBorder">
+                <button type="button" onclick="setOptionType('CE')" id="btnOptCE" class="py-1.5 font-bold rounded-lg text-center bg-tradeGreen text-black transition">CE</button>
+                <button type="button" onclick="setOptionType('PE')" id="btnOptPE" class="py-1.5 font-bold rounded-lg text-center text-gray-400 hover:text-white transition">PE</button>
+              </div>
+              <input type="hidden" id="optionType" value="CE">
+            </div>
+            <div>
+              <label class="block text-gray-400 mb-1 text-[11px]">Strike Price</label>
+              <input type="number" id="tradeStrike" step="50" placeholder="e.g. 25600" required oninput="calculateLivePreview()" class="w-full bg-[#10141b] border border-cardBorder rounded-xl p-2.5 text-white font-mono focus:outline-none focus:border-primaryBlue">
+            </div>
+          </div>
+
+          <!-- Quantity with Quick Lot Buttons -->
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="text-gray-400 text-[11px]">Quantity (Lots)</label>
+              <div class="flex gap-1" id="quickLotButtons">
+                <!-- Lot chips inserted by JS -->
+              </div>
+            </div>
+            <input type="number" id="tradeQty" step="1" placeholder="e.g. 65" required oninput="calculateLivePreview()" class="w-full bg-[#10141b] border border-cardBorder rounded-xl p-2.5 text-white font-mono focus:outline-none focus:border-primaryBlue">
+          </div>
+
+          <!-- Entry & Exit Premium -->
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-gray-400 mb-1 text-[11px]">Buy Entry (₹)</label>
+              <input type="number" id="tradeEntry" step="0.05" placeholder="e.g. 150" required oninput="calculateLivePreview()" class="w-full bg-[#10141b] border border-cardBorder rounded-xl p-2.5 text-white font-mono focus:outline-none focus:border-primaryBlue">
+            </div>
+            <div>
+              <label class="block text-gray-400 mb-1 text-[11px]">Sell Exit (₹)</label>
+              <input type="number" id="tradeExit" step="0.05" placeholder="e.g. 190" required oninput="calculateLivePreview()" class="w-full bg-[#10141b] border border-cardBorder rounded-xl p-2.5 text-white font-mono focus:outline-none focus:border-primaryBlue">
+            </div>
+          </div>
+
+          <!-- Charges -->
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="text-gray-400 text-[11px]">Brokerage & Taxes (₹)</label>
+              <span class="text-[10px] text-gray-500">Excel Default: ₹60</span>
+            </div>
+            <input type="number" id="tradeCharges" step="1" value="60" required oninput="calculateLivePreview()" class="w-full bg-[#10141b] border border-cardBorder rounded-xl p-2.5 text-white font-mono focus:outline-none focus:border-primaryBlue">
+          </div>
+
+          <!-- Real-Time Calculation Preview Card -->
+          <div id="liveCalcBox" class="bg-[#121720] border border-cardBorder rounded-2xl p-3 space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-[10px] uppercase tracking-wider text-gray-400 font-semibold">Live Excel Calculation</span>
+              <span id="previewTag" class="px-2 py-0.5 rounded text-[10px] font-bold bg-tradeGreenBg text-tradeGreen font-mono">WIN</span>
+            </div>
+            <div class="grid grid-cols-3 gap-1.5 text-center">
+              <div class="bg-cardDark/80 p-2 rounded-xl">
+                <span class="text-[10px] text-gray-400 block">Points</span>
+                <span id="prevPoints" class="font-mono font-bold text-white text-xs">+40.00</span>
+              </div>
+              <div class="bg-cardDark/80 p-2 rounded-xl">
+                <span class="text-[10px] text-gray-400 block">Cap Used</span>
+                <span id="prevCapUsed" class="font-mono font-semibold text-gray-300 text-xs">₹9,750</span>
+              </div>
+              <div class="bg-cardDark/80 p-2 rounded-xl">
+                <span class="text-[10px] text-gray-400 block">Net ROI</span>
+                <span id="prevRoi" class="font-mono font-bold text-tradeGreen text-xs">+26.05%</span>
+              </div>
+            </div>
+            <div class="flex justify-between items-center pt-1 border-t border-cardBorder/60 px-1">
+              <span class="text-[11px] text-gray-300">Net Take-Home P&L:</span>
+              <span id="prevNetPnl" class="text-base font-bold font-mono text-tradeGreen">+₹2,540.00</span>
+            </div>
+          </div>
+
+          <!-- Notes / Mistakes -->
+          <div>
+            <label class="block text-gray-400 mb-1 text-[11px]">Mistake / Setup / Discipline Notes</label>
+            <textarea id="tradeNotes" rows="2" placeholder="e.g. Entered on 5EMA breakdown, followed SL properly..." class="w-full bg-[#10141b] border border-cardBorder rounded-xl p-2.5 text-white focus:outline-none focus:border-primaryBlue resize-none"></textarea>
+          </div>
+
+          <!-- Submit Buttons -->
+          <div class="pt-2 flex gap-2">
+            <button type="button" onclick="closeTradeModal()" class="w-1/3 py-3 rounded-xl bg-cardBorder text-gray-300 font-semibold active:scale-95 transition">Cancel</button>
+            <button type="submit" id="modalSubmitBtn" class="flex-1 py-3 rounded-xl bg-tradeGreen hover:bg-emerald-400 text-black font-bold text-xs tracking-wide active:scale-95 transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-check"></i> Save Trade
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ================= EDIT CAPITAL MODAL ================= -->
+    <div id="capitalModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-cardDark w-full max-w-sm rounded-2xl border border-cardBorder p-4 space-y-3.5 shadow-2xl">
+        <div class="flex justify-between items-center">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-wallet text-amber-400"></i> Set Starting Capital
+          </h3>
+          <button onclick="closeCapitalModal()" class="text-gray-400 hover:text-white">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <p class="text-xs text-gray-400 leading-normal">
+          Default is ₹20,000 as configured in your Excel journal. All cumulative returns and ROI are computed on this base.
+        </p>
+        <div>
+          <label class="block text-gray-400 mb-1 text-[11px]">Starting Capital Amount (₹)</label>
+          <input type="number" id="inputStartingCap" step="1000" class="w-full bg-[#10141b] border border-cardBorder rounded-xl p-2.5 text-white font-mono text-base focus:outline-none focus:border-primaryBlue">
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeCapitalModal()" class="flex-1 py-2.5 bg-cardBorder text-gray-300 rounded-xl text-xs font-semibold">Cancel</button>
+          <button type="button" onclick="saveStartingCapital()" class="flex-1 py-2.5 bg-tradeGreen text-black rounded-xl text-xs font-bold">Update Capital</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TRADE DETAIL MODAL ================= -->
+    <div id="detailModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-cardDark w-full max-w-sm rounded-2xl border border-cardBorder p-4 space-y-3 shadow-2xl relative">
+        <button onclick="closeDetailModal()" class="absolute right-3.5 top-3.5 text-gray-400 hover:text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div id="detailModalContent">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Box -->
+    <div id="toastBox" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 opacity-0 -translate-y-4">
+      <div class="bg-[#1f2937] border border-cardBorder text-white text-xs px-4 py-2.5 rounded-full shadow-xl flex items-center gap-2">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-tradeGreen"></i>
+        <span id="toastMsg">Action completed successfully</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- APPLICATION JAVASCRIPT LOGIC -->
+  <script>
+    // Initial Excel Seed Data
+    const INITIAL_TRADES = [
+      {
+        id: "trade_1",
+        date: "2026-09-20",
+        instrument: "NIFTY",
+        optionType: "CE",
+        strike: 25600,
+        qty: 65,
+        entry: 150,
+        exit: 190,
+        charges: 60,
+        notes: "Excel Trade 1: Clean momentum breakout, target hit."
+      },
+      {
+        id: "trade_2",
+        date: "2026-09-20",
+        instrument: "NIFTY",
+        optionType: "CE",
+        strike: 26500,
+        qty: 65,
+        entry: 200,
+        exit: 180,
+        charges: 60,
+        notes: "Excel Trade 2: Premium decay, strict Stop Loss triggered."
+      }
+    ];
+
+    // State Variables
+    let trades = [];
+    let startingCapital = 20000;
+    let currentFilter = 'ALL';
+    let currentTab = 'dashboard';
+
+    // Lot Size definitions for Indian Indices
+    const LOT_SIZES = {
+      NIFTY: [25, 50, 65, 75, 130],
+      BANKNIFTY: [15, 30, 45, 60],
+      FINNIFTY: [25, 50, 75, 100],
+      SENSEX: [10, 20, 30, 50]
+    };
+
+    // Initialize application on load
+    window.onload = function() {
+      loadState();
+      updateLotPresets();
+      setDefaultDate();
+      renderAll();
+      window.addEventListener('resize', drawEquityChart);
+    };
+
+    // Load data from LocalStorage or default
+    function loadState() {
+      try {
+        const savedCap = localStorage.getItem('gohil_start_capital');
+        if (savedCap !== null) {
+          startingCapital = parseFloat(savedCap);
+        }
+
+        const savedTrades = localStorage.getItem('gohil_trades');
+        if (savedTrades) {
+          trades = JSON.parse(savedTrades);
+        } else {
+          trades = [...INITIAL_TRADES];
+          saveTradesToStorage();
+        }
+      } catch (e) {
+        console.error("Storage load error:", e);
+        trades = [...INITIAL_TRADES];
+      }
+    }
+
+    function saveTradesToStorage() {
+      try {
+        localStorage.setItem('gohil_trades', JSON.stringify(trades));
+      } catch (e) {
+        console.error("Storage save error", e);
+      }
+    }
+
+    function saveCapitalToStorage() {
+      try {
+        localStorage.setItem('gohil_start_capital', startingCapital.toString());
+      } catch (e) {
+        console.error("Capital save error", e);
+      }
+    }
+
+    // Default current date
+    function setDefaultDate() {
+      const today = new Date().toISOString().split('T')[0];
+      const tradeDateInput = document.getElementById('tradeDate');
+      if (tradeDateInput) tradeDateInput.value = today;
+    }
+
+    // Navigation Switcher
+    function switchTab(tabId) {
+      currentTab = tabId;
+      ['dashboard', 'journal', 'analytics'].forEach(tab => {
+        const view = document.getElementById(`view-${tab}`);
+        const btn = document.getElementById(`nav-btn-${tab}`);
+        if (tab === tabId) {
+          view.classList.remove('hidden');
+          btn.classList.add('text-tradeGreen');
+          btn.classList.remove('text-gray-400');
+        } else {
+          view.classList.add('hidden');
+          btn.classList.remove('text-tradeGreen');
+          btn.classList.add('text-gray-400');
+        }
+      });
+
+      if (tabId === 'dashboard') {
+        setTimeout(drawEquityChart, 50);
+      } else if (tabId === 'journal') {
+        renderJournal();
+      }
+    }
+
+    // Calculate trade metrics from an entry (Exact Excel formula)
+    function computeTrade(t) {
+      const points = t.exit - t.entry;
+      const grossPnl = points * t.qty;
+      const charges = t.charges || 60;
+      const netPnl = grossPnl - charges;
+      const capitalUsed = t.entry * t.qty;
+      const roi = capitalUsed > 0 ? (netPnl / capitalUsed) * 100 : 0;
+      const isWin = netPnl > 0;
+      const isLoss = netPnl < 0;
+
+      return {
+        ...t,
+        points,
+        grossPnl,
+        charges,
+        netPnl,
+        capitalUsed,
+        roi,
+        status: isWin ? 'WIN' : isLoss ? 'LOSS' : 'BE'
+      };
+    }
+
+    // Render entire UI
+    function renderAll() {
+      // Sort trades chronologically
+      const sortedTrades = [...trades].sort((a, b) => new Date(a.date) - new Date(b.date));
+      const computedList = sortedTrades.map(computeTrade);
+
+      // Calculations
+      let totalNetPnl = 0;
+      let totalGrossPnl = 0;
+      let totalCharges = 0;
+      let winsCount = 0;
+      let lossesCount = 0;
+      let totalWinAmount = 0;
+      let totalLossAmount = 0;
+      let maxWin = 0;
+      let maxLoss = 0;
+
+      computedList.forEach(t => {
+        totalNetPnl += t.netPnl;
+        totalGrossPnl += t.grossPnl;
+        totalCharges += t.charges;
+
+        if (t.netPnl > 0) {
+          winsCount++;
+          totalWinAmount += t.netPnl;
+          if (t.netPnl > maxWin) maxWin = t.netPnl;
+        } else if (t.netPnl < 0) {
+          lossesCount++;
+          totalLossAmount += Math.abs(t.netPnl);
+          if (t.netPnl < maxLoss) maxLoss = t.netPnl;
+        }
+      });
+
+      const currentCapital = startingCapital + totalNetPnl;
+      const overallRoi = startingCapital > 0 ? (totalNetPnl / startingCapital) * 100 : 0;
+      const totalTrades = computedList.length;
+      const winRate = totalTrades > 0 ? (winsCount / totalTrades) * 100 : 0;
+      const avgWin = winsCount > 0 ? totalWinAmount / winsCount : 0;
+      const avgLoss = lossesCount > 0 ? totalLossAmount / lossesCount : 0;
+      const profitFactor = totalLossAmount > 0 ? (totalWinAmount / totalLossAmount).toFixed(2) : (totalWinAmount > 0 ? '∞' : '0.00');
+
+      // Update Header & Dashboard Hero
+      document.getElementById('headerCapBadge').innerText = formatCurrency(currentCapital);
+      document.getElementById('heroCurrentCap').innerText = formatCurrency(currentCapital);
+      document.getElementById('heroStartCap').innerText = formatCurrency(startingCapital);
+      
+      const heroNetPnlEl = document.getElementById('heroNetPnl');
+      heroNetPnlEl.innerText = (totalNetPnl >= 0 ? '+' : '') + formatCurrency(totalNetPnl);
+      heroNetPnlEl.className = `text-base font-bold font-mono mt-0.5 ${totalNetPnl >= 0 ? 'text-tradeGreen' : 'text-tradeRed'}`;
+
+      const heroRoiEl = document.getElementById('heroRoiBadge');
+      heroRoiEl.innerText = (overallRoi >= 0 ? '+' : '') + overallRoi.toFixed(2) + '%';
+      heroRoiEl.className = `text-xs font-mono font-semibold px-2 py-0.5 rounded-full ${overallRoi >= 0 ? 'bg-tradeGreenBg text-tradeGreen' : 'bg-tradeRedBg text-tradeRed'}`;
+
+      // Metrics
+      document.getElementById('metricTotalTrades').innerText = totalTrades;
+      document.getElementById('metricWinRate').innerText = winRate.toFixed(1) + '%';
+      document.getElementById('metricCharges').innerText = formatCurrency(totalCharges);
+      document.getElementById('metricProfitFactor').innerHTML = `Profit Factor: <strong class="text-white">${profitFactor}</strong>`;
+      
+      document.getElementById('countWins').innerText = winsCount;
+      document.getElementById('countLosses').innerText = lossesCount;
+      document.getElementById('avgWinDisplay').innerText = '+' + formatCurrency(avgWin);
+      document.getElementById('avgLossDisplay').innerText = '-' + formatCurrency(avgLoss);
+
+      // Win/Loss ratio bar
+      const winPercent = totalTrades > 0 ? (winsCount / totalTrades) * 100 : 50;
+      document.getElementById('barWinRatio').style.width = `${winPercent}%`;
+      document.getElementById('barLossRatio').style.width = `${100 - winPercent}%`;
+
+      // Analytics Tab Metrics
+      document.getElementById('statGrossPnl').innerText = (totalGrossPnl >= 0 ? '+' : '') + formatCurrency(totalGrossPnl);
+      document.getElementById('statBrokerage').innerText = formatCurrency(totalCharges);
+      document.getElementById('statMaxWin').innerText = '+' + formatCurrency(maxWin);
+      document.getElementById('statMaxLoss').innerText = formatCurrency(maxLoss);
+
+      // Render recent trades
+      renderRecentTrades(computedList);
+
+      // Render journal view
+      renderJournal();
+
+      // Render Equity Chart
+      drawEquityChart();
+    }
+
+    // Render Recent 3 trades on Dashboard
+    function renderRecentTrades(computedList) {
+      const container = document.getElementById('recentTradesList');
+      container.innerHTML = '';
+      
+      const reversed = [...computedList].reverse().slice(0, 3);
+      if (reversed.length === 0) {
+        container.innerHTML = `<div class="p-4 text-center text-xs text-gray-500 bg-cardDark rounded-xl border border-cardBorder">No trades recorded yet. Click '+' to log your first trade!</div>`;
+        return;
+      }
+
+      reversed.forEach(t => {
+        container.appendChild(createTradeCard(t));
+      });
+    }
+
+    // Render full journal with filter & search
+    function renderJournal() {
+      const container = document.getElementById('journalList');
+      const emptyState = document.getElementById('journalEmptyState');
+      const searchVal = (document.getElementById('journalSearchInput').value || '').toLowerCase();
+      
+      container.innerHTML = '';
+      
+      const computedList = [...trades].map(computeTrade).sort((a, b) => new Date(b.date) - new Date(a.date));
+      document.getElementById('allCount').innerText = computedList.length;
+
+      const filtered = computedList.filter(t => {
+        // Tab Filter
+        if (currentFilter === 'WIN' && t.netPnl <= 0) return false;
+        if (currentFilter === 'LOSS' && t.netPnl >= 0) return false;
+        if (currentFilter === 'CE' && t.optionType !== 'CE') return false;
+        if (currentFilter === 'PE' && t.optionType !== 'PE') return false;
+
+        // Search text
+        if (searchVal) {
+          const matchStrike = t.strike.toString().includes(searchVal);
+          const matchInst = t.instrument.toLowerCase().includes(searchVal);
+          const matchNotes = (t.notes || '').toLowerCase().includes(searchVal);
+          const matchDate = t.date.includes(searchVal);
+          if (!matchStrike && !matchInst && !matchNotes && !matchDate) return false;
+        }
+
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        emptyState.classList.remove('hidden');
+      } else {
+        emptyState.classList.add('hidden');
+        filtered.forEach(t => {
+          container.appendChild(createTradeCard(t, true));
+        });
+      }
+    }
+
+    // Helper: Build a Trade Card element
+    function createTradeCard(t, fullActions = false) {
+      const card = document.createElement('div');
+      card.className = "bg-cardDark border border-cardBorder hover:border-gray-600 rounded-2xl p-3.5 transition active:scale-[0.99] cursor-pointer";
+      
+      const isWin = t.netPnl >= 0;
+      const isCE = t.optionType === 'CE';
+      const pointsSign = t.points >= 0 ? '+' : '';
+      const pnlSign = t.netPnl >= 0 ? '+' : '';
+
+      card.onclick = () => openDetailModal(t.id);
+
+      card.innerHTML = `
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-[11px] font-bold font-mono ${isCE ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'}">
+              ${t.instrument} ${t.strike} ${t.optionType}
+            </span>
+            <span class="text-[11px] text-gray-400 font-mono">${formatDate(t.date)}</span>
+          </div>
+          <span class="text-xs font-mono font-bold ${isWin ? 'text-tradeGreen' : 'text-tradeRed'}">
+            ${pnlSign}${formatCurrency(t.netPnl)}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 mt-2.5 pt-2 border-t border-cardBorder/60 text-[11px] text-gray-400">
+          <div>
+            <span>Points: </span>
+            <span class="font-mono font-medium ${t.points >= 0 ? 'text-tradeGreen' : 'text-tradeRed'}">${pointsSign}${t.points.toFixed(1)}</span>
+          </div>
+          <div>
+            <span>Qty: </span>
+            <span class="font-mono text-gray-200">${t.qty}</span>
+          </div>
+          <div class="text-right">
+            <span>ROI: </span>
+            <span class="font-mono font-medium ${isWin ? 'text-tradeGreen' : 'text-tradeRed'}">${isWin ? '+' : ''}${t.roi.toFixed(1)}%</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between mt-2 pt-1.5 text-[10px] text-gray-400 border-t border-cardBorder/30">
+          <div class="truncate max-w-[240px]">
+            <i class="fa-regular fa-comment-dots mr-1 text-gray-500"></i>
+            <span class="italic text-gray-300">${t.notes || 'No notes added'}</span>
+          </div>
+          <span class="text-gray-400 text-[11px] font-mono">₹${t.entry} → ₹${t.exit}</span>
+        </div>
+      `;
+
+      return card;
+    }
+
+    // Filter selector in Journal view
+    function setFilter(type) {
+      currentFilter = type;
+      document.querySelectorAll('.filter-tab').forEach(btn => {
+        btn.classList.remove('bg-cardBorder', 'text-white');
+        btn.classList.add('bg-cardDark', 'text-gray-400');
+      });
+      const activeBtn = document.getElementById(`filter-btn-${type}`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-cardBorder', 'text-white');
+        activeBtn.classList.remove('bg-cardDark', 'text-gray-400');
+      }
+      renderJournal();
+    }
+
+    // Equity Curve Chart (Canvas Renderer - No heavy external script)
+    function drawEquityChart() {
+      const canvas = document.getElementById('equityCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      
+      const width = canvas.parentElement.clientWidth;
+      const height = canvas.parentElement.clientHeight;
+
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.scale(dpr, dpr);
+
+      ctx.clearRect(0, 0, width, height);
+
+      // Chronological points
+      const sorted = [...trades].sort((a, b) => new Date(a.date) - new Date(b.date));
+      const noDataHint = document.getElementById('noDataCanvasHint');
+
+      if (sorted.length === 0) {
+        noDataHint.classList.remove('hidden');
+        return;
+      }
+      noDataHint.classList.add('hidden');
+
+      // Build cumulative equity points
+      const points = [startingCapital];
+      let running = startingCapital;
+      sorted.forEach(t => {
+        const p = computeTrade(t);
+        running += p.netPnl;
+        points.push(running);
+      });
+
+      const minVal = Math.min(...points) * 0.98;
+      const maxVal = Math.max(...points) * 1.02;
+      const range = maxVal - minVal || 1;
+
+      const padX = 24;
+      const padY = 20;
+      const chartW = width - padX * 2;
+      const chartH = height - padY * 2;
+
+      // Draw faint baseline for starting capital
+      const baseRatio = (startingCapital - minVal) / range;
+      const baseY = height - padY - baseRatio * chartH;
+
+      ctx.strokeStyle = '#30363d';
+      ctx.setLineDash([4, 4]);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padX, baseY);
+      ctx.lineTo(width - padX, baseY);
+      ctx.stroke();
+      ctx.setLineDash([]); // Reset line dash
+
+      // Calculate path coordinates
+      const coords = points.map((val, idx) => {
+        const x = padX + (idx / (points.length - 1)) * chartW;
+        const y = height - padY - ((val - minVal) / range) * chartH;
+        return { x, y, val };
+      });
+
+      // Gradient fill under curve
+      const lastPoint = coords[coords.length - 1];
+      const isProfitable = lastPoint.val >= startingCapital;
+      const lineColor = isProfitable ? '#00D09C' : '#EB5757';
+
+      const gradient = ctx.createLinearGradient(0, padY, 0, height);
+      if (isProfitable) {
+        gradient.addColorStop(0, 'rgba(0, 208, 156, 0.25)');
+        gradient.addColorStop(1, 'rgba(0, 208, 156, 0.0)');
+      } else {
+        gradient.addColorStop(0, 'rgba(235, 87, 87, 0.25)');
+        gradient.addColorStop(1, 'rgba(235, 87, 87, 0.0)');
+      }
+
+      ctx.beginPath();
+      coords.forEach((pt, i) => {
+        if (i === 0) ctx.moveTo(pt.x, pt.y);
+        else ctx.lineTo(pt.x, pt.y);
+      });
+      ctx.lineTo(coords[coords.length - 1].x, height - padY);
+      ctx.lineTo(coords[0].x, height - padY);
+      ctx.closePath();
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      // Main line stroke
+      ctx.beginPath();
+      coords.forEach((pt, i) => {
+        if (i === 0) ctx.moveTo(pt.x, pt.y);
+        else ctx.lineTo(pt.x, pt.y);
+      });
+      ctx.strokeStyle = lineColor;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Plot point dots
+      coords.forEach((pt, i) => {
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, i === coords.length - 1 ? 4 : 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = lineColor;
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = '#161b22';
+        ctx.stroke();
+      });
+
+      // Show latest balance text on chart
+      ctx.font = '10px JetBrains Mono, monospace';
+      ctx.fillStyle = '#8b949e';
+      ctx.textAlign = 'right';
+      ctx.fillText('₹' + Math.round(lastPoint.val), width - 8, lastPoint.y < 25 ? lastPoint.y + 14 : lastPoint.y - 6);
+    }
+
+    // Modal Control: Trade Entry
+    function openTradeModal(editId = null) {
+      const modal = document.getElementById('tradeModal');
+      const form = document.getElementById('tradeForm');
+      form.reset();
+      document.getElementById('editTradeId').value = '';
+      setDefaultDate();
+
+      if (editId) {
+        const item = trades.find(t => t.id === editId);
+        if (item) {
+          document.getElementById('modalTitle').innerText = "Edit Option Trade";
+          document.getElementById('editTradeId').value = item.id;
+          document.getElementById('tradeDate').value = item.date;
+          document.getElementById('tradeInstrument').value = item.instrument;
+          setOptionType(item.optionType);
+          document.getElementById('tradeStrike').value = item.strike;
+          document.getElementById('tradeQty').value = item.qty;
+          document.getElementById('tradeEntry').value = item.entry;
+          document.getElementById('tradeExit').value = item.exit;
+          document.getElementById('tradeCharges').value = item.charges || 60;
+          document.getElementById('tradeNotes').value = item.notes || '';
+        }
+      } else {
+        document.getElementById('modalTitle').innerText = "Add New Option Trade";
+        setOptionType('CE');
+        document.getElementById('tradeCharges').value = 60;
+      }
+
+      updateLotPresets();
+      calculateLivePreview();
+      modal.classList.remove('hidden');
+    }
+
+    function closeTradeModal() {
+      document.getElementById('tradeModal').classList.add('hidden');
+    }
+
+    // CE / PE selection toggle
+    function setOptionType(type) {
+      document.getElementById('optionType').value = type;
+      const btnCE = document.getElementById('btnOptCE');
+      const btnPE = document.getElementById('btnOptPE');
+      const badge = document.getElementById('modalHeaderBadge');
+
+      if (type === 'CE') {
+        btnCE.className = "py-1.5 font-bold rounded-lg text-center bg-tradeGreen text-black transition";
+        btnPE.className = "py-1.5 font-bold rounded-lg text-center text-gray-400 hover:text-white transition";
+        badge.className = "w-2.5 h-2.5 rounded-full bg-tradeGreen";
+      } else {
+        btnPE.className = "py-1.5 font-bold rounded-lg text-center bg-rose-500 text-white transition";
+        btnCE.className = "py-1.5 font-bold rounded-lg text-center text-gray-400 hover:text-white transition";
+        badge.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
+      }
+      calculateLivePreview();
+    }
+
+    // Update Quick lot buttons based on chosen Index
+    function updateLotPresets() {
+      const inst = document.getElementById('tradeInstrument').value;
+      const container = document.getElementById('quickLotButtons');
+      container.innerHTML = '';
+      const lots = LOT_SIZES[inst] || [25, 50, 75];
+
+      lots.forEach(qty => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = "text-[10px] font-mono px-1.5 py-0.5 rounded bg-cardBorder/70 text-gray-300 hover:text-white";
+        chip.innerText = qty;
+        chip.onclick = () => {
+          document.getElementById('tradeQty').value = qty;
+          calculateLivePreview();
+        };
+        container.appendChild(chip);
+      });
+    }
+
+    // Live Calculation while typing in modal
+    function calculateLivePreview() {
+      const entry = parseFloat(document.getElementById('tradeEntry').value) || 0;
+      const exit = parseFloat(document.getElementById('tradeExit').value) || 0;
+      const qty = parseFloat(document.getElementById('tradeQty').value) || 0;
+      const charges = parseFloat(document.getElementById('tradeCharges').value) || 0;
+
+      const points = exit - entry;
+      const grossPnl = points * qty;
+      const netPnl = grossPnl - charges;
+      const capUsed = entry * qty;
+      const roi = capUsed > 0 ? (netPnl / capUsed) * 100 : 0;
+
+      const tagEl = document.getElementById('previewTag');
+      const pointsEl = document.getElementById('prevPoints');
+      const capUsedEl = document.getElementById('prevCapUsed');
+      const roiEl = document.getElementById('prevRoi');
+      const netPnlEl = document.getElementById('prevNetPnl');
+
+      pointsEl.innerText = (points >= 0 ? '+' : '') + points.toFixed(2);
+      capUsedEl.innerText = formatCurrency(capUsed);
+      roiEl.innerText = (roi >= 0 ? '+' : '') + roi.toFixed(1) + '%';
+      netPnlEl.innerText = (netPnl >= 0 ? '+' : '') + formatCurrency(netPnl);
+
+      if (netPnl > 0) {
+        tagEl.innerText = 'WIN';
+        tagEl.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-tradeGreenBg text-tradeGreen font-mono';
+        roiEl.className = 'font-mono font-bold text-tradeGreen text-xs';
+        netPnlEl.className = 'text-base font-bold font-mono text-tradeGreen';
+      } else if (netPnl < 0) {
+        tagEl.innerText = 'LOSS';
+        tagEl.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-tradeRedBg text-tradeRed font-mono';
+        roiEl.className = 'font-mono font-bold text-tradeRed text-xs';
+        netPnlEl.className = 'text-base font-bold font-mono text-tradeRed';
+      } else {
+        tagEl.innerText = 'BE';
+        tagEl.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-gray-700 text-gray-300 font-mono';
+        roiEl.className = 'font-mono font-bold text-gray-300 text-xs';
+        netPnlEl.className = 'text-base font-bold font-mono text-gray-300';
+      }
+    }
+
+    // Submit New or Edited Trade
+    function handleTradeSubmit(e) {
+      e.preventDefault();
+      const editId = document.getElementById('editTradeId').value;
+
+      const tradeData = {
+        id: editId || 'trade_' + Date.now(),
+        date: document.getElementById('tradeDate').value,
+        instrument: document.getElementById('tradeInstrument').value,
+        optionType: document.getElementById('optionType').value,
+        strike: parseFloat(document.getElementById('tradeStrike').value),
+        qty: parseInt(document.getElementById('tradeQty').value),
+        entry: parseFloat(document.getElementById('tradeEntry').value),
+        exit: parseFloat(document.getElementById('tradeExit').value),
+        charges: parseFloat(document.getElementById('tradeCharges').value) || 60,
+        notes: document.getElementById('tradeNotes').value.trim()
+      };
+
+      if (editId) {
+        const index = trades.findIndex(t => t.id === editId);
+        if (index !== -1) {
+          trades[index] = tradeData;
+          showToast("Trade updated successfully!", "check");
+        }
+      } else {
+        trades.push(tradeData);
+        showToast("Trade saved to journal!", "check");
+      }
+
+      saveTradesToStorage();
+      closeTradeModal();
+      renderAll();
+    }
+
+    // Open Detailed Trade Modal
+    function openDetailModal(tradeId) {
+      const raw = trades.find(t => t.id === tradeId);
+      if (!raw) return;
+      const t = computeTrade(raw);
+      const content = document.getElementById('detailModalContent');
+      const isWin = t.netPnl >= 0;
+
+      content.innerHTML = `
+        <div class="flex items-center justify-between pb-3 border-b border-cardBorder">
+          <div>
+            <span class="text-[10px] uppercase font-mono tracking-wider text-gray-400">Trade Record</span>
+            <h4 class="text-base font-bold text-white">${t.instrument} ${t.strike} ${t.optionType}</h4>
+          </div>
+          <span class="text-xs px-2.5 py-1 rounded-full font-bold font-mono ${isWin ? 'bg-tradeGreenBg text-tradeGreen' : 'bg-tradeRedBg text-tradeRed'}">
+            ${t.status}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 text-xs py-2">
+          <div class="bg-[#12161f] p-2 rounded-xl">
+            <span class="text-gray-400 text-[10px] block">Date</span>
+            <span class="font-mono text-gray-200">${formatDate(t.date)}</span>
+          </div>
+          <div class="bg-[#12161f] p-2 rounded-xl">
+            <span class="text-gray-400 text-[10px] block">Quantity</span>
+            <span class="font-mono text-gray-200">${t.qty}</span>
+          </div>
+          <div class="bg-[#12161f] p-2 rounded-xl">
+            <span class="text-gray-400 text-[10px] block">Entry Price</span>
+            <span class="font-mono text-gray-200">₹${t.entry.toFixed(2)}</span>
+          </div>
+          <div class="bg-[#12161f] p-2 rounded-xl">
+            <span class="text-gray-400 text-[10px] block">Exit Price</span>
+            <span class="font-mono text-gray-200">₹${t.exit.toFixed(2)}</span>
+          </div>
+          <div class="bg-[#12161f] p-2 rounded-xl">
+            <span class="text-gray-400 text-[10px] block">Gross P&L</span>
+            <span class="font-mono ${t.grossPnl >= 0 ? 'text-tradeGreen' : 'text-tradeRed'}">${formatCurrency(t.grossPnl)}</span>
+          </div>
+          <div class="bg-[#12161f] p-2 rounded-xl">
+            <span class="text-gray-400 text-[10px] block">Brokerage & Taxes</span>
+            <span class="font-mono text-orange-400">₹${t.charges}</span>
+          </div>
+          <div class="bg-[#12161f] p-2 rounded-xl">
+            <span class="text-gray-400 text-[10px] block">Points Made</span>
+            <span class="font-mono text-gray-200">${t.points >= 0 ? '+' : ''}${t.points.toFixed(2)} pts</span>
+          </div>
+          <div class="bg-[#12161f] p-2 rounded-xl">
+            <span class="text-gray-400 text-[10px] block">Capital Used</span>
+            <span class="font-mono text-gray-200">${formatCurrency(t.capitalUsed)}</span>
+          </div>
+        </div>
+
+        <div class="bg-[#12161f] p-2.5 rounded-xl border border-cardBorder/60">
+          <span class="text-gray-400 text-[10px] block mb-1">Mistake / Setup Notes:</span>
+          <p class="text-xs text-gray-300 leading-relaxed font-sans">${t.notes || 'No specific notes recorded for this trade.'}</p>
+        </div>
+
+        <div class="p-2.5 rounded-xl ${isWin ? 'bg-tradeGreenBg' : 'bg-tradeRedBg'} flex justify-between items-center">
+          <span class="text-xs font-semibold ${isWin ? 'text-tradeGreen' : 'text-tradeRed'}">Net Take-Home P&L:</span>
+          <span class="text-base font-bold font-mono ${isWin ? 'text-tradeGreen' : 'text-tradeRed'}">${(t.netPnl >= 0 ? '+' : '') + formatCurrency(t.netPnl)} (${(t.roi >= 0 ? '+' : '') + t.roi.toFixed(1)}%)</span>
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button onclick="editTradeFromDetail('${t.id}')" class="flex-1 py-2.5 bg-cardBorder text-white rounded-xl text-xs font-semibold hover:bg-gray-600 active:scale-95 transition flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-pencil"></i> Edit
+          </button>
+          <button onclick="deleteTrade('${t.id}')" class="flex-1 py-2.5 bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-semibold hover:bg-rose-500/30 active:scale-95 transition flex items-center justify-center gap-1.5">
+            <i class="fa-regular fa-trash-can"></i> Delete
+          </button>
+        </div>
+      `;
+
+      document.getElementById('detailModal').classList.remove('hidden');
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detailModal').classList.add('hidden');
+    }
+
+    function editTradeFromDetail(id) {
+      closeDetailModal();
+      openTradeModal(id);
+    }
+
+    function deleteTrade(id) {
+      trades = trades.filter(t => t.id !== id);
+      saveTradesToStorage();
+      closeDetailModal();
+      renderAll();
+      showToast("Trade deleted from journal", "trash");
+    }
+
+    // Capital Modal Handlers
+    function openCapitalModal() {
+      document.getElementById('inputStartingCap').value = startingCapital;
+      document.getElementById('capitalModal').classList.remove('hidden');
+    }
+
+    function closeCapitalModal() {
+      document.getElementById('capitalModal').classList.add('hidden');
+    }
+
+    function saveStartingCapital() {
+      const val = parseFloat(document.getElementById('inputStartingCap').value);
+      if (val > 0) {
+        startingCapital = val;
+        saveCapitalToStorage();
+        closeCapitalModal();
+        renderAll();
+        showToast("Starting capital updated!", "wallet");
+      }
+    }
+
+    // Export Trades to CSV matching Excel columns
+    function exportToCSV() {
+      if (trades.length === 0) {
+        showToast("No trades to export", "circle-xmark");
+        return;
+      }
+
+      const headers = ["Date", "Instrument", "Type", "Strike", "Qty", "Buy Entry", "Sell Exit", "Charges", "Points", "Gross P&L", "Net P&L", "ROI %", "Notes"];
+      const rows = trades.map(computeTrade).map(t => [
+        t.date,
+        t.instrument,
+        t.optionType,
+        t.strike,
+        t.qty,
+        t.entry,
+        t.exit,
+        t.charges,
+        t.points.toFixed(2),
+        t.grossPnl.toFixed(2),
+        t.netPnl.toFixed(2),
+        t.roi.toFixed(2) + '%',
+        `"${(t.notes || '').replace(/"/g, '""')}"`
+      ]);
+
+      const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Gohil_Trading_Journal_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("Excel CSV Exported!", "download");
+    }
+
+    // Import Trades from CSV
+    function importFromCSV(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const text = e.target.result;
+          const lines = text.split('\n').filter(l => l.trim().length > 0);
+          if (lines.length < 2) throw new Error("File empty");
+
+          const newTrades = [];
+          for (let i = 1; i < lines.length; i++) {
+            // Regex to handle quoted strings with commas
+            const cols = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || lines[i].split(',');
+            if (cols.length >= 7) {
+              newTrades.push({
+                id: 'import_' + Date.now() + '_' + i,
+                date: cols[0].replace(/"/g, '').trim(),
+                instrument: cols[1].replace(/"/g, '').trim() || 'NIFTY',
+                optionType: cols[2].replace(/"/g, '').trim() || 'CE',
+                strike: parseFloat(cols[3]) || 25000,
+                qty: parseInt(cols[4]) || 50,
+                entry: parseFloat(cols[5]) || 100,
+                exit: parseFloat(cols[6]) || 100,
+                charges: parseFloat(cols[7]) || 60,
+                notes: cols[12] ? cols[12].replace(/^"|"$/g, '').trim() : ''
+              });
+            }
+          }
+
+          if (newTrades.length > 0) {
+            trades = [...trades, ...newTrades];
+            saveTradesToStorage();
+            renderAll();
+            showToast(`Imported ${newTrades.length} trades!`, "file-import");
+          }
+        } catch (err) {
+          console.error(err);
+          showToast("Failed to parse CSV file", "triangle-exclamation");
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    // Reset to demo Excel trades
+    function loadSampleExcelTrades() {
+      trades = [...INITIAL_TRADES];
+      startingCapital = 20000;
+      saveTradesToStorage();
+      saveCapitalToStorage();
+      renderAll();
+      showToast("Reset to Gohil Excel trades", "rotate-left");
+    }
+
+    // Clear All data
+    function clearAllDataPrompt() {
+      trades = [];
+      saveTradesToStorage();
+      renderAll();
+      showToast("All trades cleared", "trash");
+    }
+
+    // Utilities
+    function formatCurrency(num) {
+      return '₹' + Math.abs(num).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0].slice(2)}`;
+      }
+      return dateStr;
+    }
+
+    function showToast(message, icon = "check") {
+      const toast = document.getElementById('toastBox');
+      const msg = document.getElementById('toastMsg');
+      const iconEl = document.getElementById('toastIcon');
+
+      msg.innerText = message;
+      iconEl.className = `fa-solid fa-${icon} text-tradeGreen`;
+
+      toast.classList.remove('opacity-0', '-translate-y-4');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', '-translate-y-4');
+      }, 2400);
+    }
+  </script>
+  <script>
+    // PWA Service Worker & Install Prompt
+    if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch((err) => console.log('SW registration failed:', err));
+      });
+    }
+
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const btn = document.getElementById('pwaInstallBtn');
+      if (btn) {
+        btn.classList.remove('hidden');
+        btn.classList.add('flex');
+      }
+    });
+
+    async function installPWA() {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      const btn = document.getElementById('pwaInstallBtn');
+      if (btn) {
+        btn.classList.add('hidden');
+        btn.classList.remove('flex');
+      }
+    }
+  </script>
+</body>
+</html>
